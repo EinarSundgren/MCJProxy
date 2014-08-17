@@ -37,18 +37,6 @@ public class TimerDisplay extends JProgressBar implements MProxyInterface, Actio
 			int[] elapsedTimeByteArray = new int[4];
 			int[] stopTimeByteArray  = new int[4];
 			
-			/*
-			for (int i = 7; i > 3; i --){	
-				elapsedTimeByteArray[i-4]=data.get(i);
-				System.out.println(Integer.toBinaryString((int)data.get(i)));
-			}
-			for (int i = 3; i >=0; i --){	
-				stopTimeByteArray[i]=data.get(i);
-				System.out.println(Integer.toBinaryString((int)data.get(i)));
-			}
-			System.out.println("first Stoptime: "  + MarineControlJProxy.intArrayToInt(stopTimeByteArray));
-			System.out.println("first Elapsedtime: "  + MarineControlJProxy.intArrayToInt(elapsedTimeByteArray));
-			*/
 			for (int i = 0; i < 4; i ++){	
 				elapsedTimeByteArray[i]=data.get(i);
 				//System.out.println((byte)(int)data.get(i));
@@ -59,8 +47,8 @@ public class TimerDisplay extends JProgressBar implements MProxyInterface, Actio
 			}
 			
 
-			//System.out.print ("Stoptime: "  + MarineControlJProxy.intArrayToInt(stopTimeByteArray));
-			//System.out.println(" Elapsedtime: "  + MarineControlJProxy.intArrayToInt(elapsedTimeByteArray));
+			System.out.print ("Stoptime: "  + MarineControlJProxy.intArrayToInt(stopTimeByteArray));
+			System.out.println(" Elapsedtime: "  + MarineControlJProxy.intArrayToInt(elapsedTimeByteArray));
 			
 			int maxVal = MarineControlJProxy.intArrayToInt(stopTimeByteArray);
 			int elapsedVal = MarineControlJProxy.intArrayToInt(elapsedTimeByteArray);
@@ -118,7 +106,6 @@ public class TimerDisplay extends JProgressBar implements MProxyInterface, Actio
 }
 //TODO: Skicka kontroll till den inbyggda för nollställning.
 //TODO: Skicka kontroll till den inbyggda för justering av slutvärde.
-//TODO: Lägg till knapp i interfacet.
 
 //TODO: Beräkna cheksum. Rata felaktig.
 

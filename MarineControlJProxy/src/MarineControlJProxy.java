@@ -30,7 +30,7 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	 */
 	
 	//TODO: Make this a tree sorted by ID.
-	private HashMap<Integer,MProxyInterface> attachedInterfaces;
+	private HashMap<Integer, MProxyInterface> attachedInterfaces;
 
 	private InputStream serialInputStream;
 	/** The output stream to the port */
@@ -43,7 +43,9 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	private static final int DATA_RATE = 115200;
 
 	private static final int SOF = 0xFF;
-	private static final int ESCAPE = 0xFE;
+	private static final int EOF = 0xFE;
+	
+	private static final int ESCAPE = 0xF0;
 	
 	final static int TIMER = 0x10;
 	final static int GYRO = 0x20;
@@ -136,23 +138,23 @@ public class MarineControlJProxy implements SerialPortEventListener {
 		
 		
 		/*
-		 * System.out.println("to: " + toAdress + 
+		  System.out.println("to: " + toAdress + 
 						 " from " + fromAdress + 
 						 " Binary " + Integer.toBinaryString(fromAdress) + 
 						 " type:" + messageType + 
 						 " DataLength " + dataLength);
-						 */
+			*/			 
 		// Update attached interfaces
 		if (attachedInterfaces.containsKey(fromAdress)){
 			attachedInterfaces.get(fromAdress).setData(frameBuffer.subList(4, 4+dataLength));
 			attachedInterfaces.get(fromAdress).setReturnCaller(this);
 		} else {
-			// System.out.println("Key " + fromAdress +" did not exist in the " + attachedInterfaces.size() + " keys");
+			 System.out.println("Key " + fromAdress +" did not exist in the " + attachedInterfaces.size() + " keys");
 			
 		}
 		
 		if ((fromAdress & TIMER) > 0 ){
-			// System.out.println("From timer.");
+			 System.out.println("From timer.");
 		}
 		
 		if ((fromAdress & GYRO) > 0 ) {
@@ -164,7 +166,23 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	public void zeroTimer(int timerId){
 		
 		try {
-			serialOutputStream.write(0x8);
+			serialOutputStream.write((byte)timerId); //to ID
+			serialOutputStream.write((byte)0x10); //from ID
+			
+			
+			serialOutputStream.write((byte)0x02); //Message
+			
+			serialOutputStream.write((byte)0x03); // Payload size
+			
+			serialOutputStream.write((byte)0x01); // Payload
+			serialOutputStream.write((byte)0x00); // Payload msb
+			serialOutputStream.write((byte)0x30); // Payload lsb
+			
+			serialOutputStream.write((byte)0x2); //CRC
+			serialOutputStream.write((byte)0x3); //CRC
+			serialOutputStream.write(EOF);
+
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -196,14 +214,13 @@ public class MarineControlJProxy implements SerialPortEventListener {
 
 						for (int i = 0; i < in; i++) {
 
-							if (
-									
+							if (									
 									( i == 0
-										    && (((int) data[i] & 0xFF) == SOF)
+										    && (((int) data[i] & 0xFF) == EOF)
 											)
 									|| (
 								i > 0
-								&& (((int) data[i] & 0xFF) == SOF)
+								&& (((int) data[i] & 0xFF) == EOF)
 								&& (((int) data[i - 1] & 0xFF) != ESCAPE)
 								) 
 								
@@ -212,9 +229,14 @@ public class MarineControlJProxy implements SerialPortEventListener {
 								/*
 								System.out.println("New frame. Starting with "
 										+ i + 1 + "th byte in buffer");
-									*/	
+								*/	
 
 								if (frameBuffer.size() > 0){
+									for (int j = 0 ; j < frameBuffer.size(); j ++) {
+										System.out.print((char)(int)frameBuffer.get(j));
+									}
+									System.out.println();
+									
 									processFrame(frameBuffer);
 									frameBuffer.clear();
 								}
