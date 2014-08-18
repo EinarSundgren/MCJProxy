@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 
@@ -12,10 +11,14 @@ import gnu.io.SerialPortEventListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 
 public class MarineControlJProxy implements SerialPortEventListener {
-	SerialPort serialPort;
+	public static final String SET_ELAPSED_TIMER = "SET";
+	public static final String SET_STOP_TIME = "SST";
+	
+	private SerialPort serialPort;
+	
+	
 	/** The port we're normally going to use. */
 	private static final String PORT_NAMES[] = { "/dev/tty.usbserial-A9007UX1", // Mac
 																				// OS
@@ -170,13 +173,13 @@ public class MarineControlJProxy implements SerialPortEventListener {
 			serialOutputStream.write((byte)0x10); //from ID
 			
 			
-			serialOutputStream.write((byte)0x02); //Message
+			serialOutputStream.write((byte)0x02); // Message
 			
 			serialOutputStream.write((byte)0x03); // Payload size
 			
 			serialOutputStream.write((byte)0x01); // Payload
-			serialOutputStream.write((byte)0x00); // Payload msb
-			serialOutputStream.write((byte)0x30); // Payload lsb
+			serialOutputStream.write((byte)0x0B); // Payload msb
+			serialOutputStream.write((byte)0xB8); // Payload lsb
 			
 			serialOutputStream.write((byte)0x2); //CRC
 			serialOutputStream.write((byte)0x3); //CRC

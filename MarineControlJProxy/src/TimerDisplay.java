@@ -1,7 +1,6 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +15,6 @@ public class TimerDisplay extends JProgressBar implements MProxyInterface, Actio
 	private static final long serialVersionUID = 1L;
 	private int id;
 	
-	@SuppressWarnings("unused") // Since it is used
 	private MarineControlJProxy returnProxy;
 	
 	public TimerDisplay(int id) {
@@ -96,8 +94,11 @@ public class TimerDisplay extends JProgressBar implements MProxyInterface, Actio
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		System.out.println("Button pressed");
-		setZero();
+		if (e.getActionCommand().equals(MarineControlJProxy.SET_ELAPSED_TIMER)){
+			System.out.println("Reset button pressed");
+			setZero();
+		}
+
 	}
 	
 	
