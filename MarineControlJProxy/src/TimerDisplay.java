@@ -1,26 +1,63 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 
-public class TimerDisplay extends JProgressBar implements MProxyInterface, ActionListener{
+public class TimerDisplay extends JPanel implements MProxyInterface, ActionListener, ChangeListener {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	private int id;
+	private JProgressBar progressMeter; 
+	private JButton resetButton;
+	private JButton setStopButton;
+	private JSpinner stopTimeSpinner;
+	private JLabel elapsedOf;
 	
 	private MarineControlJProxy returnProxy;
+	
+	private boolean autoUpdateStoptime = true;
 	
 	public TimerDisplay(int id) {
 		super();
 		this.id = id;
+		elapsedOf = new JLabel();
+		progressMeter = new JProgressBar();
+		resetButton = new JButton("Reset");
+		setStopButton = new JButton("Set stoptime");
+		stopTimeSpinner = new JSpinner();
+		stopTimeSpinner.setModel(new SpinnerNumberModel(0, 0, 20000, 60));
+		resetButton.setActionCommand(MarineControlJProxy.SET_ELAPSED_TIMER);
+		setStopButton.setActionCommand(MarineControlJProxy.SET_STOP_TIME);
+		
+		resetButton.addActionListener(this);
+		setStopButton.addActionListener(this);
+		
+		stopTimeSpinner.addChangeListener(this);
+		
 		System.out.println("Timer interface created with adress: " + id);
+		this.add(progressMeter);
+		this.add(resetButton);
+		this.add(stopTimeSpinner);
+		this.add(setStopButton);
+		this.add(elapsedOf);
 	}
 
 	@Override
@@ -53,13 +90,17 @@ public class TimerDisplay extends JProgressBar implements MProxyInterface, Actio
 			//System.out.println((float)elapsedVal/maxVal);
 			if (elapsedVal>=maxVal) {this.setForeground(Color.RED);}
 			else if ((float)elapsedVal/maxVal > 0.7) {
-				this.setForeground(Color.YELLOW);
+				progressMeter.setForeground(Color.YELLOW);
 			}
 			else {
-					this.setForeground(Color.GREEN);}
+				progressMeter.setForeground(Color.GREEN);}
 			
-			this.setMaximum(maxVal);
-			this.setValue(elapsedVal);
+			progressMeter.setMaximum(maxVal);
+			progressMeter.setValue(elapsedVal);
+			if (autoUpdateStoptime){
+				stopTimeSpinner.setValue(maxVal);
+			}
+			elapsedOf.setText(""+elapsedVal +"/" + maxVal);
 	}
 
 	@Override
@@ -90,6 +131,19 @@ public class TimerDisplay extends JProgressBar implements MProxyInterface, Actio
 			System.out.println("Return proxy not set.");
 		}
 	}
+	
+	
+	@Override
+	public void setStoptime(int stopTime) {
+		if (returnProxy!=null){
+			System.out.println("Setting stoptime...");
+			returnProxy.setStopTime(this.id, stopTime);
+			
+		} else {
+			System.out.println("Return proxy not set.");
+		}
+		
+	}
 
 	
 	@Override
@@ -97,20 +151,33 @@ public class TimerDisplay extends JProgressBar implements MProxyInterface, Actio
 		if (e.getActionCommand().equals(MarineControlJProxy.SET_ELAPSED_TIMER)){
 			System.out.println("Reset button pressed");
 			setZero();
+		} else if (e.getActionCommand().equals(MarineControlJProxy.SET_STOP_TIME)) {
+			System.out.println("Stop time change");
+			setStoptime((int) stopTimeSpinner.getValue());
+			autoUpdateStoptime = true;
+				
+			}
 		}
+
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		// TODO Auto-generated method stub
+		System.out.println("Changed");
+		autoUpdateStoptime = false;
+	}
+
+
+
+
+
+
 
 	}
 	
 	
 
 
-}
-//TODO: Skicka kontroll till den inbyggda för nollställning.
-//TODO: Skicka kontroll till den inbyggda för justering av slutvärde.
 
 //TODO: Beräkna cheksum. Rata felaktig.
-
-//TODO: Få timerna att gå på interrupt och inte delayfunktion.
-
 //TODO: Bygg hårdvaran och testa på båten.
 //TODO: Skriv regressionstester i C och Java

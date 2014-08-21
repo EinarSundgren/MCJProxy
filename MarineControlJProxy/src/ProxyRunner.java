@@ -1,8 +1,5 @@
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 public class ProxyRunner {
 public static void main(String[] args) throws Exception {
@@ -11,16 +8,6 @@ public static void main(String[] args) throws Exception {
 		main.initialize();
 		TimerDisplay timerDisplay = new TimerDisplay(0x10);
 		TimerDisplay timerDisplay2 = new TimerDisplay(0x11);
-		
-		JButton reset1Button = new JButton("Reset1");
-		JButton reset2Button = new JButton("Reset2");		
-		
-		
-		reset1Button.setActionCommand(MarineControlJProxy.SET_ELAPSED_TIMER);
-		reset2Button.setActionCommand(MarineControlJProxy.SET_ELAPSED_TIMER);
-		
-		reset1Button.addActionListener(timerDisplay);
-		reset2Button.addActionListener(timerDisplay2);
 		
 		main.attachInterface(timerDisplay);
 		main.attachInterface(timerDisplay2);
@@ -43,10 +30,10 @@ public static void main(String[] args) throws Exception {
         final JPanel comboPanel = new JPanel();
         guiFrame.add(comboPanel);
         comboPanel.add(timerDisplay);
-        comboPanel.add(reset1Button);
+        //comboPanel.add(reset1Button);
         
         comboPanel.add(timerDisplay2);
-        comboPanel.add(reset2Button);
+        //comboPanel.add(reset2Button);
         guiFrame.setVisible(true);
 	}
 }

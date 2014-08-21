@@ -10,5 +10,5 @@ public interface MProxyInterface{
 	public int getId();
 	public ArrayList<Integer> getData();
 	public void setZero();
-	
+	public void setStoptime(int stopTime);
 }

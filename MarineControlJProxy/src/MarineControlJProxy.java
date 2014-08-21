@@ -151,13 +151,14 @@ public class MarineControlJProxy implements SerialPortEventListener {
 		if (attachedInterfaces.containsKey(fromAdress)){
 			attachedInterfaces.get(fromAdress).setData(frameBuffer.subList(4, 4+dataLength));
 			attachedInterfaces.get(fromAdress).setReturnCaller(this);
+			System.out.println("Set timer " +  fromAdress);
 		} else {
-			 System.out.println("Key " + fromAdress +" did not exist in the " + attachedInterfaces.size() + " keys");
+			 //System.out.println("Key " + fromAdress +" did not exist in the " + attachedInterfaces.size() + " keys");
 			
 		}
 		
 		if ((fromAdress & TIMER) > 0 ){
-			 System.out.println("From timer.");
+			 //System.out.println("From timer.");
 		}
 		
 		if ((fromAdress & GYRO) > 0 ) {
@@ -171,16 +172,11 @@ public class MarineControlJProxy implements SerialPortEventListener {
 		try {
 			serialOutputStream.write((byte)timerId); //to ID
 			serialOutputStream.write((byte)0x10); //from ID
-			
-			
 			serialOutputStream.write((byte)0x02); // Message
-			
 			serialOutputStream.write((byte)0x03); // Payload size
-			
 			serialOutputStream.write((byte)0x01); // Payload
 			serialOutputStream.write((byte)0x0B); // Payload msb
 			serialOutputStream.write((byte)0xB8); // Payload lsb
-			
 			serialOutputStream.write((byte)0x2); //CRC
 			serialOutputStream.write((byte)0x3); //CRC
 			serialOutputStream.write(EOF);
@@ -191,6 +187,30 @@ public class MarineControlJProxy implements SerialPortEventListener {
 			e.printStackTrace();
 		}
 	}
+	
+	
+	
+	public void setStopTime(int timerId, int stopTime){
+		
+		try {
+			serialOutputStream.write((byte)timerId); //to ID
+			serialOutputStream.write((byte)0x10); //from ID
+			serialOutputStream.write((byte)0x02); // Message Update single value
+			serialOutputStream.write((byte)0x03); // Payload size
+			serialOutputStream.write((byte)0x00); // Payload
+			serialOutputStream.write((byte)(stopTime >> 8) & 0xFF ); // Payload msb
+			serialOutputStream.write((byte)stopTime & 0xFF); // Payload lsb
+			serialOutputStream.write((byte)0x2); //CRC
+			serialOutputStream.write((byte)0x3); //CRC
+			serialOutputStream.write(EOF);
+
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Handle an event on the serial port. Read the data and print it.
 	 */
@@ -236,9 +256,9 @@ public class MarineControlJProxy implements SerialPortEventListener {
 
 								if (frameBuffer.size() > 0){
 									for (int j = 0 ; j < frameBuffer.size(); j ++) {
-										System.out.print((char)(int)frameBuffer.get(j));
+										//System.out.print((char)(int)frameBuffer.get(j));
 									}
-									System.out.println();
+									//System.out.println();
 									
 									processFrame(frameBuffer);
 									frameBuffer.clear();
