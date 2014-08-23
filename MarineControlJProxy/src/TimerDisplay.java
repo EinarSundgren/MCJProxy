@@ -100,7 +100,7 @@ public class TimerDisplay extends JPanel implements MProxyInterface, ActionListe
 			if (autoUpdateStoptime){
 				stopTimeSpinner.setValue(maxVal);
 			}
-			elapsedOf.setText(""+elapsedVal +"/" + maxVal);
+			elapsedOf.setText(""+elapsedVal +"/" + maxVal + "minutes." + (float)elapsedVal/60 + "/" + (float) maxVal/60 + " hours");
 	}
 
 	@Override

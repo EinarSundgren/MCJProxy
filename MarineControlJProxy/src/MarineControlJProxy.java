@@ -175,8 +175,8 @@ public class MarineControlJProxy implements SerialPortEventListener {
 			serialOutputStream.write((byte)0x02); // Message
 			serialOutputStream.write((byte)0x03); // Payload size
 			serialOutputStream.write((byte)0x01); // Payload
-			serialOutputStream.write((byte)0x0B); // Payload msb
-			serialOutputStream.write((byte)0xB8); // Payload lsb
+			serialOutputStream.write((byte)0x00); // Payload msb
+			serialOutputStream.write((byte)0x00); // Payload lsb
 			serialOutputStream.write((byte)0x2); //CRC
 			serialOutputStream.write((byte)0x3); //CRC
 			serialOutputStream.write(EOF);
