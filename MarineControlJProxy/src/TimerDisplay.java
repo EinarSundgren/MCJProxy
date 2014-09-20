@@ -52,7 +52,7 @@ public class TimerDisplay extends JPanel implements MProxyInterface, ActionListe
 		
 		stopTimeSpinner.addChangeListener(this);
 		
-		System.out.println("Timer interface created with adress: " + id);
+		// System.out.println("Timer interface created with adress: " + id);
 		this.add(progressMeter);
 		this.add(resetButton);
 		this.add(stopTimeSpinner);
@@ -149,13 +149,12 @@ public class TimerDisplay extends JPanel implements MProxyInterface, ActionListe
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().equals(MarineControlJProxy.SET_ELAPSED_TIMER)){
-			System.out.println("Reset button pressed");
+			System.out.println("Reset button pressed for timer " + this.id);
 			setZero();
 		} else if (e.getActionCommand().equals(MarineControlJProxy.SET_STOP_TIME)) {
 			System.out.println("Stop time change");
 			setStoptime((int) stopTimeSpinner.getValue());
 			autoUpdateStoptime = true;
-				
 			}
 		}
 

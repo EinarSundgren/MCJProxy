@@ -18,12 +18,15 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	
 	private SerialPort serialPort;
 	
+	private boolean readingFrame = false;
+	
 	
 	/** The port we're normally going to use. */
 	private static final String PORT_NAMES[] = { "/dev/tty.usbserial-A9007UX1", // Mac
 																				// OS
 																				// X
 			"/dev/ttyACM0", // Raspberry Pi
+//			"/dev/ttyACM4",
 			"/dev/ttyUSB0", // Linux
 			"COM3", // Windows
 	};
@@ -43,11 +46,10 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	/** Milliseconds to block while waiting for port open */
 	private static final int TIME_OUT = 2000;
 	/** Default bits per second for COM port. */
-	private static final int DATA_RATE = 115200;
+	private static final int DATA_RATE = 9600;
 
 	private static final int SOF = 0xFF;
-	private static final int EOF = 0xFE;
-	
+	private static final int EOF = 0xFE;	
 	private static final int ESCAPE = 0xF0;
 	
 	final static int TIMER = 0x10;
@@ -102,6 +104,7 @@ public class MarineControlJProxy implements SerialPortEventListener {
 			// add event listeners
 			serialPort.addEventListener(this);
 			serialPort.notifyOnDataAvailable(true);
+			
 		} catch (Exception e) {
 			System.err.println(e.toString());
 		}
@@ -134,41 +137,52 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	}
 	
 	public void processFrame(ArrayList<Integer> frame) {
+		
+		// Remove all escape characters in the array.
+		for (int i = 0; i < frame.size(); i ++) {
+			//System.out.println("Processing " + String.format("0b%8s",  Integer.toBinaryString((int) 0xFF & frame.get(i))).replace(' ', '0') + "");
+			
+			if (frame.get(i)==ESCAPE){
+				System.out.println("Escaped");
+				frame.remove(i);
+				i--;
+			}
+		}
+			
 		int toAdress = (int) frame.get(0) & 0xFF; // To ID
 		int fromAdress = (int) frame.get(1) & 0xFF; // From ID
 		int messageType = (int) frame.get(2) & 0xFF; // Message type
 		int dataLength =  frame.get(3) & 0xFF; // Data length
 		
 		
-		/*
+		
 		  System.out.println("to: " + toAdress + 
 						 " from " + fromAdress + 
 						 " Binary " + Integer.toBinaryString(fromAdress) + 
 						 " type:" + messageType + 
 						 " DataLength " + dataLength);
-			*/			 
+						 
 		// Update attached interfaces
 		if (attachedInterfaces.containsKey(fromAdress)){
 			attachedInterfaces.get(fromAdress).setData(frameBuffer.subList(4, 4+dataLength));
 			attachedInterfaces.get(fromAdress).setReturnCaller(this);
-			System.out.println("Set timer " +  fromAdress);
+			// System.out.println("Set timer " +  fromAdress);
 		} else {
 			 //System.out.println("Key " + fromAdress +" did not exist in the " + attachedInterfaces.size() + " keys");
 			
 		}
 		
 		if ((fromAdress & TIMER) > 0 ){
-			 //System.out.println("From timer.");
+			 // System.out.println("From timer.");
 		}
 		
 		if ((fromAdress & GYRO) > 0 ) {
-			System.out.println("From gyro.");
+			// System.out.println("From gyro.");
 		}
 	}
 
 	
-	public void zeroTimer(int timerId){
-		
+	public void zeroTimer(int timerId){		
 		try {
 			serialOutputStream.write((byte)timerId); //to ID
 			serialOutputStream.write((byte)0x10); //from ID
@@ -180,10 +194,11 @@ public class MarineControlJProxy implements SerialPortEventListener {
 			serialOutputStream.write((byte)0x2); //CRC
 			serialOutputStream.write((byte)0x3); //CRC
 			serialOutputStream.write(EOF);
-
 			
+			// System.out.println("Zeroed timer " + timerId);
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		
 			e.printStackTrace();
 		}
 	}
@@ -218,6 +233,8 @@ public class MarineControlJProxy implements SerialPortEventListener {
 		// ByteBuffer b = ByteBuffer.allocate(2);
 		byte[] data = new byte[4];
 		frameBuffer = new ArrayList<Integer>();
+		
+		
 		if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
 			try {
 				int in;
@@ -234,10 +251,28 @@ public class MarineControlJProxy implements SerialPortEventListener {
 					 */
 					// If first in new buffer is EOF and last previous is not
 					// escape
+					
+					// System.out.println(data);
 
 						for (int i = 0; i < in; i++) {
+							
+							// System.out.println("Reading " + String.format("0x%8s",  Integer.toHexString(0xFF & data[i])).replace(' ', '0'));
 
-							if (									
+
+
+							//if (!readingFrame && data[i]==SOF) {}
+							// Handle end of frame situations.
+							// If EOF found, process frame.
+							if (!readingFrame && 
+									((int) data[i] & 0xFF) == SOF ) {
+								System.out.println("New frame. Starting with "
+										+ i + 1 + "th byte in buffer");
+								readingFrame = true;
+								
+							} else if (readingFrame) {
+								
+								
+								if (									
 									( i == 0
 										    && (((int) data[i] & 0xFF) == EOF)
 											)
@@ -252,22 +287,31 @@ public class MarineControlJProxy implements SerialPortEventListener {
 								/*
 								System.out.println("New frame. Starting with "
 										+ i + 1 + "th byte in buffer");
-								*/	
+									*/
 
 								if (frameBuffer.size() > 0){
-									for (int j = 0 ; j < frameBuffer.size(); j ++) {
-										//System.out.print((char)(int)frameBuffer.get(j));
-									}
+										/*
+										for (int j = 0 ; j < frameBuffer.size(); j ++) {
+											System.out.print((char)(int)frameBuffer.get(j));
+										}
+										*/
 									//System.out.println();
 									
-									processFrame(frameBuffer);
-									frameBuffer.clear();
-								}
+										processFrame(frameBuffer);
+										frameBuffer.clear();
+										readingFrame = false;
+									}
 								
-							} else {
-								// Add byte as int to avoid making it force signed (thnx Java)
-								frameBuffer.add((int)data[i] & 0xFF);
-							}
+								} else 
+										if (data[i]!=ESCAPE){
+											// Add byte as int to avoid making it force signed (thnx Java)
+											System.out.println("Appending " + String.format("0x%8s",  Integer.toHexString(0xFF & data[i])).replace(' ', '0'));
+											frameBuffer.add((int)data[i] & 0xFF);
+								} else {
+									System.out.println("Escaped");
+								}
+							
+						}
 						}
 				}
 				//System.out.println("End");
@@ -282,10 +326,25 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	
 	public static int intArrayToInt(int[] b) 
 	{
-	    return b[0] & 0xFF | 
-	    		( b[1] & 0xFF) << 8 | 
-	    		(b[2] & 0xFF) << 16 | 
-	    		( b[3] & 0xFF) << 24;
+		int num = 0;
+		int ret =
+				 
+				( (b[0] & 0xFF) |
+	    		( (b[1] & 0xFF) << 8)  | 
+	    		( (b[2] & 0xFF ) << 16) +
+	    		( (b[3]  & 0xFF) << 24));
+		//1 1111 0100
+	
+	
+		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int) 0xFF & b[0])).replace(' ', '0') + "");
+		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[1]) << 8 ) ))).replace(' ', '0'));
+		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[2]) << 16)   ))).replace(' ', '0'));
+		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[3]) << 24)  ))).replace(' ', '0'));
+		System.out.println("Result: "+ ret);
+		System.out.println("Result bin: " + String.format("0b%8s",  Integer.toBinaryString(ret).replace(' ', '0')));
+	
+	    
+		return ret;
 	}
 	
 	public static float intArrayToFloat(int[] b) 
@@ -293,5 +352,4 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	    return b[0] & 0xFF | ( b[1] & 0xFF) << 8 | (b[2] & 0xFF) << 16 | ( b[3] & 0xFF) << 24;
 	}
 	
-
 }
