@@ -94,6 +94,8 @@ public class TimerDisplay extends JPanel implements MProxyInterface, ActionListe
 			}
 			else {
 				progressMeter.setForeground(Color.GREEN);}
+			if (progressMeter.getValue()+1 != elapsedVal) System.out.println("Error in meter " + this.id + 
+					" when meter was: " + progressMeter.getValue() + " request change to: " + elapsedVal );
 			
 			progressMeter.setMaximum(maxVal);
 			progressMeter.setValue(elapsedVal);

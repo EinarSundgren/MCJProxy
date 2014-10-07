@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 
-public class MarineControlJProxy implements SerialPortEventListener {
+public class MarineControlJProxy extends MarineControlJProxyCore implements SerialPortEventListener {
 	public static final String SET_ELAPSED_TIMER = "SET";
 	public static final String SET_STOP_TIME = "SST";
 	
@@ -54,6 +54,7 @@ public class MarineControlJProxy implements SerialPortEventListener {
 	
 	final static int TIMER = 0x10;
 	final static int GYRO = 0x20;
+	final static int ECHO = 0x30;
     final static int ACCELEROMETER = 0x30;
     final static int MAGNETOMETER = 0x40; 
     final static int BAROMETRIC = 0x50;
@@ -141,7 +142,7 @@ public class MarineControlJProxy implements SerialPortEventListener {
 		// Remove all escape characters in the array.
 		for (int i = 0; i < frame.size(); i ++) {
 			//System.out.println("Processing " + String.format("0b%8s",  Integer.toBinaryString((int) 0xFF & frame.get(i))).replace(' ', '0') + "");
-			
+			System.out.print(frame.get(i));
 			if (frame.get(i)==ESCAPE){
 				System.out.println("Escaped");
 				frame.remove(i);
@@ -163,12 +164,15 @@ public class MarineControlJProxy implements SerialPortEventListener {
 						 " DataLength " + dataLength);
 						 
 		// Update attached interfaces
-		if (attachedInterfaces.containsKey(fromAdress)){
+		if (fromAdress == ECHO){
+			System.out.println("ECHO!");
+		}
+		  else if (attachedInterfaces.containsKey(fromAdress)){
 			attachedInterfaces.get(fromAdress).setData(frameBuffer.subList(4, 4+dataLength));
 			attachedInterfaces.get(fromAdress).setReturnCaller(this);
 			// System.out.println("Set timer " +  fromAdress);
 		} else {
-			 //System.out.println("Key " + fromAdress +" did not exist in the " + attachedInterfaces.size() + " keys");
+			 System.out.println("Key " + fromAdress +" did not exist in the " + attachedInterfaces.size() + " keys");
 			
 		}
 		
@@ -212,15 +216,47 @@ public class MarineControlJProxy implements SerialPortEventListener {
 			serialOutputStream.write((byte)0x10); //from ID
 			serialOutputStream.write((byte)0x02); // Message Update single value
 			serialOutputStream.write((byte)0x03); // Payload size
-			serialOutputStream.write((byte)0x00); // Payload
+			serialOutputStream.write((byte)0x00); // Payload Following is addressed to stoptime
 			serialOutputStream.write((byte)(stopTime >> 8) & 0xFF ); // Payload msb
 			serialOutputStream.write((byte)stopTime & 0xFF); // Payload lsb
 			serialOutputStream.write((byte)0x2); //CRC
 			serialOutputStream.write((byte)0x3); //CRC
 			serialOutputStream.write(EOF);
-
 			
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void requestEcho(int intValue, float floatValue){
+		
+		try{
+		serialOutputStream.write((byte)0x30); //to ID
+		serialOutputStream.write((byte)0x30); //from ID
+		serialOutputStream.write((byte)0x02); // Message type
+		serialOutputStream.write((byte)0x08); // Payload size
+
+		serialOutputStream.write((byte)(intValue >> 24) & 0xFF ); // Payload msb
+		serialOutputStream.write((byte)(intValue >> 16) & 0xFF ); // Payload 
+		serialOutputStream.write((byte)(intValue >> 8) & 0xFF ); // Payload 
+		serialOutputStream.write((byte)(intValue & 0xFF)); // Payload lsb
+		
+		serialOutputStream.write((byte)(intValue >> 24) & 0xFF ); // Payload msb
+		serialOutputStream.write((byte)(intValue >> 16) & 0xFF ); // Payload 
+		serialOutputStream.write((byte)(intValue >> 8) & 0xFF ); // Payload 
+		serialOutputStream.write((byte)(intValue & 0xFF)); // Payload lsb
+
+		/*
+		serialOutputStream.write((byte)(floatValue >> 24) & 0xFF ); // Payload msb
+		serialOutputStream.write((byte)(floatValue >> 16) & 0xFF ); // Payload 
+		serialOutputStream.write((byte)(floatValue >> 8) & 0xFF ); // Payload 
+		serialOutputStream.write((byte)(floatValue & 0xFF)); // Payload lsb
+		*/
+		serialOutputStream.write((byte)0x2); //CRC
+		serialOutputStream.write((byte)0x3); //CRC
+		serialOutputStream.write(EOF);
+		} catch (IOException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -295,7 +331,9 @@ public class MarineControlJProxy implements SerialPortEventListener {
 											System.out.print((char)(int)frameBuffer.get(j));
 										}
 										*/
+										
 									//System.out.println();
+									
 									
 										processFrame(frameBuffer);
 										frameBuffer.clear();
@@ -305,7 +343,9 @@ public class MarineControlJProxy implements SerialPortEventListener {
 								} else 
 										if (data[i]!=ESCAPE){
 											// Add byte as int to avoid making it force signed (thnx Java)
-											System.out.println("Appending " + String.format("0x%8s",  Integer.toHexString(0xFF & data[i])).replace(' ', '0'));
+											//System.out.println("Appending " + String.format("0x%8s",  Integer.toHexString(0xFF & data[i])).replace(' ', '0'));
+											//System.out.println((char)data[i]);
+
 											frameBuffer.add((int)data[i] & 0xFF);
 								} else {
 									System.out.println("Escaped");
