@@ -15,6 +15,8 @@ public class testMarineControlJproxyEchoUART {
 	public void test() {
 		MarineControlJProxy proxy = new MarineControlJProxy();
 		proxy.initialize();
+		//ProxyInterface echoInterface;
+		//proxy.attachInterface();
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {

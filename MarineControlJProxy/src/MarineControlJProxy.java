@@ -165,7 +165,8 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 						 
 		// Update attached interfaces
 		if (fromAdress == ECHO){
-			System.out.println("ECHO!");
+			System.out.println("Echoed");
+			System.out.println();
 		}
 		  else if (attachedInterfaces.containsKey(fromAdress)){
 			attachedInterfaces.get(fromAdress).setData(frameBuffer.subList(4, 4+dataLength));
@@ -376,12 +377,14 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 		//1 1111 0100
 	
 	
+		/*
 		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int) 0xFF & b[0])).replace(' ', '0') + "");
 		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[1]) << 8 ) ))).replace(' ', '0'));
 		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[2]) << 16)   ))).replace(' ', '0'));
 		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[3]) << 24)  ))).replace(' ', '0'));
 		System.out.println("Result: "+ ret);
 		System.out.println("Result bin: " + String.format("0b%8s",  Integer.toBinaryString(ret).replace(' ', '0')));
+		*/
 	
 	    
 		return ret;
