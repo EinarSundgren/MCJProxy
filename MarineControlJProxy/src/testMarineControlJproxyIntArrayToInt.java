@@ -63,7 +63,6 @@ public class testMarineControlJproxyIntArrayToInt {
 
 	@Test
 	public void test() {
-		//-16777216
 		assertEquals("Content should be zero", 0x00000000, MarineControlJProxy.intArrayToInt(a));
 		assertEquals("Number interpreted wrong" + b, 0x000000FF, MarineControlJProxy.intArrayToInt(b));
 		assertEquals("Number interpreted wrong" + c, 0x0000FF00, MarineControlJProxy.intArrayToInt(c));

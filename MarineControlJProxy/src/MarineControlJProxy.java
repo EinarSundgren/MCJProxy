@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import gnu.io.CommPortIdentifier;
 import gnu.io.SerialPort;
@@ -46,7 +48,7 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 	/** Milliseconds to block while waiting for port open */
 	private static final int TIME_OUT = 2000;
 	/** Default bits per second for COM port. */
-	private static final int DATA_RATE = 9600;
+	private static final int DATA_RATE = 19200;
 
 	private static final int SOF = 0xFF;
 	private static final int EOF = 0xFE;	
@@ -137,6 +139,12 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 		mProxyInterface.setReturnCaller(this);
 	}
 	
+	public MProxyInterface getInterface(int id){
+		//if (attachedInterfaces.containsKey(id)){
+			return attachedInterfaces.get(id);
+		//} 
+	}
+	
 	public void processFrame(ArrayList<Integer> frame) {
 		
 		// Remove all escape characters in the array.
@@ -168,7 +176,8 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 			System.out.println("Echoed");
 			System.out.println();
 		}
-		  else if (attachedInterfaces.containsKey(fromAdress)){
+		
+		if (attachedInterfaces.containsKey(fromAdress)){
 			attachedInterfaces.get(fromAdress).setData(frameBuffer.subList(4, 4+dataLength));
 			attachedInterfaces.get(fromAdress).setReturnCaller(this);
 			// System.out.println("Set timer " +  fromAdress);
@@ -243,10 +252,17 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 		serialOutputStream.write((byte)(intValue >> 8) & 0xFF ); // Payload 
 		serialOutputStream.write((byte)(intValue & 0xFF)); // Payload lsb
 		
-		serialOutputStream.write((byte)(intValue >> 24) & 0xFF ); // Payload msb
-		serialOutputStream.write((byte)(intValue >> 16) & 0xFF ); // Payload 
-		serialOutputStream.write((byte)(intValue >> 8) & 0xFF ); // Payload 
-		serialOutputStream.write((byte)(intValue & 0xFF)); // Payload lsb
+		byte[] floatArray = ByteBuffer.allocate(4).putFloat(floatValue).array();
+		serialOutputStream.write(floatArray[0]);
+		serialOutputStream.write(floatArray[1]);
+		serialOutputStream.write(floatArray[2]);
+		serialOutputStream.write(floatArray[3]);
+		/*
+		serialOutputStream.write(((byte)(floatValue) >> 24) & 0xFF ); // Payload msb
+		serialOutputStream.write(((byte)(floatValue) >> 16) & 0xFF ); // Payload 
+		serialOutputStream.write(((byte)(floatValue) >> 8) & 0xFF ); // Payload 
+		serialOutputStream.write(((byte)(floatValue) & 0xFF)); // Payload lsb
+		*/
 
 		/*
 		serialOutputStream.write((byte)(floatValue >> 24) & 0xFF ); // Payload msb
@@ -367,7 +383,6 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 	
 	public static int intArrayToInt(int[] b) 
 	{
-		int num = 0;
 		int ret =
 				 
 				( (b[0] & 0xFF) |
@@ -377,14 +392,14 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 		//1 1111 0100
 	
 	
-		/*
+		
 		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int) 0xFF & b[0])).replace(' ', '0') + "");
 		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[1]) << 8 ) ))).replace(' ', '0'));
 		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[2]) << 16)   ))).replace(' ', '0'));
 		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString((int)(((0xFF & b[3]) << 24)  ))).replace(' ', '0'));
 		System.out.println("Result: "+ ret);
 		System.out.println("Result bin: " + String.format("0b%8s",  Integer.toBinaryString(ret).replace(' ', '0')));
-		*/
+		
 	
 	    
 		return ret;
@@ -392,7 +407,63 @@ public class MarineControlJProxy extends MarineControlJProxyCore implements Seri
 	
 	public static float intArrayToFloat(int[] b) 
 	{
-	    return b[0] & 0xFF | ( b[1] & 0xFF) << 8 | (b[2] & 0xFF) << 16 | ( b[3] & 0xFF) << 24;
+		
+		float ret;
+		int intBits =  
+
+				( (b[0] & 0xFF) |
+	    		( (b[1] & 0xFF) << 8)  | 
+	    		( (b[2] & 0xFF ) << 16) |
+	    		( (b[3]  & 0xFF) << 24));
+		
+		ret = Float.intBitsToFloat(intBits);
+				//b[0] & 0xFF | ( b[1] & 0xFF) << 8 | (b[2] & 0xFF) << 16 | ( b[3] & 0xFF) << 24;
+		/*
+				byte[] b = new byte[4];
+				b[0] = (byte) (intArray[0] & 0xFF);
+				b[1] = (byte) ((intArray[1] & 0xFF) << 8); 
+				b[2] = (byte) ((intArray[2] & 0xFF ) << 16);
+				b[3] = (byte) ((intArray[3]  & 0xFF) << 24);
+		
+		
+		float ret = ByteBuffer.wrap(b).order(ByteOrder.BIG_ENDIAN).getFloat();
+		*/
+		
+		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString( 0xFF & b[0])).replace(' ', '0') + "");
+		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString(0xFF & b[1] )).replace(' ', '0'));
+		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString(0xFF & b[2])).replace(' ', '0'));
+		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString(0xFF & b[3])).replace(' ', '0'));
+	
+// First two: 0b100000110000000
+/*
+		System.out.println("First two: " + String.format("0b%8s",  Integer.toBinaryString(
+				(b[0] & 0xFF) | 
+				( (b[1] & 0xFF) << 8)
+						).replace(' ', '0') + ""));
+		
+		System.out.println("First three: " + String.format("0b%8s",  Integer.toBinaryString(
+				(b[0] & 0xFF) | 
+				( (b[1] & 0xFF) << 8) |
+				( (b[2] & 0xFF ) << 16) 
+						).replace(' ', '0') + ""));
+
+
+		System.out.println("All four: " + String.format("0b%8s",  Integer.toBinaryString(
+				(b[3] & 0xFF) | 
+				( (b[2] & 0xFF) << 8) |
+				( (b[1] & 0xFF ) << 16) |
+				( (b[0]  & 0xFF) << 24)
+						).replace(' ', '0') + ""));
+		*/
+		
+//		System.out.println("Reassembling " + String.format("0b%8s",  Integer.toBinaryString(0xFF & b[1] )).replace(' ', '0'));
+
+		
+		
+		//System.out.println("Result: " + ret);
+		//System.out.println("Result bin: " + String.format("0b%8s",  Float.toHexString(ret).replace(' ', '0')));
+		
+	    return ret;
 	}
 	
 }
